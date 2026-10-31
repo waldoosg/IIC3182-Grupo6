@@ -16,7 +16,7 @@ export function LoadBreakdown({
 
   return (
     <div className="flex flex-col gap-2">
-      <p>Peso registrado: {formatWeight(weight, unit)}</p>
+      <p className="tabular-nums">Peso registrado: {formatWeight(weight, unit)}</p>
       {unit === "lb" ? (
         <p>
           Conversión de unidad: {formatKg(estimate.recordedKg)}. No es una estimación mecánica.
@@ -25,7 +25,7 @@ export function LoadBreakdown({
       {estimate.status === "estimated" ? (
         <p className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">Estimado</Badge>
-          <span>Carga estimada: {formatKg(estimate.estimatedKg)}</span>
+          <span className="tabular-nums">Carga estimada: {formatKg(estimate.estimatedKg)}</span>
         </p>
       ) : (
         <p>No se puede estimar: este modelo no tiene relación mecánica.</p>

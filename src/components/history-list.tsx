@@ -158,7 +158,7 @@ function HistoryCard({
         {swapped ? <p>En la rutina: {planned?.name}. Hecho: {actual?.name}.</p> : null}
         <ul className="flex flex-col gap-1">
           {entry.performed.sets.map((set) => (
-            <li key={set.id}>
+            <li key={set.id} className="text-base font-semibold tabular-nums">
               {formatWeight(set.weight, set.unit)} × {set.reps}
             </li>
           ))}

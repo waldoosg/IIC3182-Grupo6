@@ -7,6 +7,13 @@ async function resetDemo(page: Page) {
   await expect(page.getByText("Datos de demostración restablecidos")).toBeVisible()
 }
 
+async function openSerie(page: Page, series: number) {
+  const weight = page.getByRole("textbox", { name: `Peso serie ${series}` })
+  if (await weight.isVisible()) return
+  await page.getByRole("button", { name: new RegExp(`^Serie ${series}\\b`) }).click()
+  await expect(weight).toBeVisible()
+}
+
 async function noHorizontalOverflow(page: Page) {
   const overflows = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -28,13 +35,15 @@ test("registra una sesión, la corrige y persiste al recargar", async ({ page })
   await page.getByRole("button", { name: "Confirmar serie 1", exact: true }).click()
   await expect(page.getByText("Serie guardada")).toBeVisible()
   await page.reload()
+  await openSerie(page, 1)
   await expect(page.getByRole("textbox", { name: "Peso serie 1" })).toHaveValue("60")
   await page.getByRole("button", { name: "Subir repeticiones de la serie 1" }).click()
   await page.getByRole("button", { name: "Guardar cambios de la serie 1", exact: true }).click()
   await expect(page.getByText("Serie actualizada")).toBeVisible()
   await page.reload()
+  await openSerie(page, 1)
   await expect(page.getByRole("textbox", { name: "Repeticiones serie 1" })).toHaveValue("7")
-  await page.getByRole("link", { name: "Volver a la sesión" }).click()
+  await page.getByRole("link", { name: "Volver a ejercicios" }).click()
   await page.getByRole("button", { name: "Terminar entrenamiento", exact: true }).click()
   await page.getByRole("button", { name: "Terminar", exact: true }).click()
   await expect(page.getByText("Entrenamiento terminado")).toBeVisible()
@@ -112,7 +121,7 @@ test("una nota queda visible en el historial", async ({ page }) => {
   await page.reload()
   await expect(page.getByRole("region", { name: "Notas" })).toContainText("Banco inestable")
   await page.getByRole("button", { name: "Confirmar serie 1", exact: true }).click()
-  await page.getByRole("link", { name: "Volver a la sesión" }).click()
+  await page.getByRole("link", { name: "Volver a ejercicios" }).click()
   await page.getByRole("button", { name: "Terminar entrenamiento", exact: true }).click()
   await page.getByRole("button", { name: "Terminar", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Historial" })).toBeVisible()
@@ -150,7 +159,7 @@ test("el progreso distingue el peso registrado de la estimación", async ({ page
   await page.getByRole("textbox", { name: "Peso serie 1" }).fill("62.5")
   await page.getByRole("textbox", { name: "Repeticiones serie 1" }).fill("5")
   await page.getByRole("button", { name: "Confirmar serie 1", exact: true }).click()
-  await page.getByRole("link", { name: "Volver a la sesión" }).click()
+  await page.getByRole("link", { name: "Volver a ejercicios" }).click()
   await page.getByRole("button", { name: "Terminar entrenamiento", exact: true }).click()
   await page.getByRole("button", { name: "Terminar", exact: true }).click()
   await page.getByRole("link", { name: "Progreso" }).click()
@@ -175,7 +184,7 @@ test("una relación mecánica nueva distingue el peso original de la estimación
   await page.getByRole("textbox", { name: "Peso serie 1" }).fill("10")
   await page.getByRole("textbox", { name: "Repeticiones serie 1" }).fill("8")
   await page.getByRole("button", { name: "Confirmar serie 1", exact: true }).click()
-  await page.getByRole("link", { name: "Volver a la sesión" }).click()
+  await page.getByRole("link", { name: "Volver a ejercicios" }).click()
   await page.getByRole("button", { name: "Terminar entrenamiento", exact: true }).click()
   await page.getByRole("button", { name: "Terminar", exact: true }).click()
   await page.getByRole("link", { name: "Progreso" }).click()

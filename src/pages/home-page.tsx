@@ -1,5 +1,7 @@
+import { ArrowDownIcon } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { GymSeatIcon } from "@/components/gym-seat-icon"
 import { NoteDialog } from "@/components/note-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { presetLabel } from "@/domain/format"
 import { activeSession, findExercise, lastFinishedSession, suggestedRoutine } from "@/domain/queries"
@@ -30,59 +33,43 @@ export function HomePage() {
   const lastRoutine = state.routines.find((routine) => routine.id === last?.routineId)
   const activeGym = state.gyms.find((gym) => gym.id === state.activeGymId)
   const activeSessionGym = state.gyms.find((gym) => gym.id === active?.gymId)
+  const activeRoutine = state.routines.find((routine) => routine.id === active?.routineId)
   const ordered = [suggested, ...state.routines.filter((routine) => routine.id !== suggested.id)]
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="font-heading text-3xl font-medium">Hoy</h1>
+      <div className="flex flex-col gap-3">
+        <h1 className="font-heading text-3xl font-medium">Bienvenido</h1>
         {last && lastRoutine ? (
-          <p>
-            La última sesión terminada fue {lastRoutine.name}, así que hoy se sugiere {suggested.name}.
-          </p>
+          <>
+            <p>
+              Tu último entrenamiento fue {lastRoutine.name}. Te recomiendo {suggested.name}.
+            </p>
+            <Button
+              type="button"
+              size="lg"
+              className="w-full sm:w-fit"
+              onClick={() => {
+                document.getElementById(`rutina-${suggested.id}`)?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                })
+              }}
+            >
+              <ArrowDownIcon data-icon="inline-start" />
+              Ir a {suggested.name}
+            </Button>
+          </>
         ) : (
           <p>Elige una rutina para empezar.</p>
         )}
       </div>
-      <Alert>
-        <AlertTitle>Datos de demostración</AlertTitle>
-        <AlertDescription>
-          Los gimnasios, las máquinas y las relaciones mecánicas son ficticios. Restablecer borra lo que agregues y vuelve a cargar esos datos.
-        </AlertDescription>
-      </Alert>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button type="button" variant="outline" size="lg">
-            Restablecer datos
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Restablecer datos de demostración</AlertDialogTitle>
-            <AlertDialogDescription>
-              Se borran las sesiones y los implementos que hayas agregado. Vuelven los registros de demostración.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel size="lg">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              size="lg"
-              onClick={() => {
-                resetDemo()
-                toast.success("Datos de demostración restablecidos")
-              }}
-            >
-              Restablecer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       {active ? (
         <Card>
           <CardHeader>
-            <CardTitle>Sesión en curso</CardTitle>
+            <CardTitle>Entrenamiento en curso</CardTitle>
             <CardDescription>
-              {state.routines.find((routine) => routine.id === active.routineId)?.name} · {activeSessionGym?.name}
+              {activeRoutine?.name} · {activeSessionGym?.name}
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -93,7 +80,10 @@ export function HomePage() {
         </Card>
       ) : null}
       <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-lg font-medium">Entrenando en</h2>
+        <div className="flex items-center gap-2">
+          <GymSeatIcon className="size-8 shrink-0 text-primary" />
+          <h2 className="font-heading text-lg font-medium text-primary">Sede</h2>
+        </div>
         <p>Gimnasio activo: {activeGym?.name}</p>
         <p className="text-sm text-muted-foreground">
           El historial muestra primero los registros de este gimnasio.
@@ -109,7 +99,7 @@ export function HomePage() {
           onValueChange={(value) => {
             if (value) setActiveGym(value)
           }}
-          aria-label="Entrenando en"
+          aria-label="Sede"
           className="grid w-full grid-cols-2"
         >
           {state.gyms.map((gym) => (
@@ -126,7 +116,7 @@ export function HomePage() {
           )
           const isSuggested = routine.id === suggested.id
           return (
-            <Card key={routine.id}>
+            <Card key={routine.id} id={`rutina-${routine.id}`} className="scroll-mt-4">
               <CardHeader>
                 <CardTitle>{routine.name}</CardTitle>
                 <CardDescription>
@@ -177,6 +167,42 @@ export function HomePage() {
           )
         })}
       </div>
+      <Separator />
+      <section className="flex flex-col gap-3" aria-label="Datos de demostración">
+        <Alert>
+          <AlertTitle>Datos de demostración</AlertTitle>
+          <AlertDescription>
+            Los gimnasios, las máquinas y las relaciones mecánicas son ficticios. Restablecer borra lo que agregues y vuelve a cargar esos datos.
+          </AlertDescription>
+        </Alert>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button type="button" variant="outline" size="lg">
+              Restablecer datos
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Restablecer datos de demostración</AlertDialogTitle>
+              <AlertDialogDescription>
+                Se borran las sesiones y los implementos que hayas agregado. Vuelven los registros de demostración.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel size="lg">Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                size="lg"
+                onClick={() => {
+                  resetDemo()
+                  toast.success("Datos de demostración restablecidos")
+                }}
+              >
+                Restablecer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </section>
     </div>
   )
 }

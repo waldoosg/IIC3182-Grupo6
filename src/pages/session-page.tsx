@@ -62,7 +62,7 @@ export function SessionPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <p className="text-sm text-muted-foreground">Entrenando en {gym?.name}</p>
+        <p className="text-sm text-muted-foreground">Sede: {gym?.name}</p>
         <h1 className="font-heading text-3xl font-medium">{routine.name}</h1>
         {session.status === "finished" ? <Badge variant="secondary">Terminada</Badge> : null}
       </div>

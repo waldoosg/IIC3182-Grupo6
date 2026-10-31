@@ -22,7 +22,7 @@ import type { ProgressPoint } from "@/domain/queries"
 import { useAppState } from "@/storage/store"
 
 const chartConfig = {
-  recordedKg: { label: "Peso registrado (kg)", color: "var(--foreground)" },
+  recordedKg: { label: "Peso registrado (kg)", color: "var(--chart-1)" },
   estimatedKg: { label: "Carga estimada (kg)", color: "var(--chart-2)" },
 } satisfies ChartConfig
 

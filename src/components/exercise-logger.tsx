@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { ArrowLeftIcon, CheckIcon, ChevronDownIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { EquipmentSheet } from "@/components/equipment-sheet"
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/sheet"
 import { Toggle } from "@/components/ui/toggle"
 import { equipmentLabel, changeReps, changeWeight, formatNumber, formatWeight, parsePositive, parseReps, presetLabel } from "@/domain/format"
+import { cn } from "@/lib/utils"
 import {
   alternatives,
   defaultEquipmentId,
@@ -56,6 +58,10 @@ import {
 } from "@/storage/store"
 
 type Draft = { weight: string; reps: string; setId?: string }
+
+function pendingSet(rows: Draft[]) {
+  return rows.findIndex((row) => !row.setId)
+}
 
 function draftsFrom(preload: SetLog[], confirmed: SetLog[], target: number): Draft[] {
   const count = Math.max(target, confirmed.length, 1)
@@ -94,6 +100,9 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
     draftsFrom(initialPreload, performed?.sets ?? [], item?.targetSets ?? 1),
   )
   const [errors, setErrors] = useState<Record<number, string>>({})
+  const [openSet, setOpenSet] = useState(() =>
+    pendingSet(draftsFrom(initialPreload, performed?.sets ?? [], item?.targetSets ?? 1)),
+  )
   const [swapOpen, setSwapOpen] = useState(false)
   const [occupiedNote, setOccupiedNote] = useState(true)
 
@@ -134,7 +143,9 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
       exerciseId: nextExerciseId,
       equipmentId: nextEquipmentId,
     })
-    setDrafts(draftsFrom(preload, [], item!.targetSets))
+    const rows = draftsFrom(preload, [], item!.targetSets)
+    setDrafts(rows)
+    setOpenSet(pendingSet(rows))
     setErrors({})
   }
 
@@ -172,6 +183,7 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
         ? "Serie actualizada"
         : `Serie guardada. ${formatWeight(weight, savedUnit)} × ${reps}`,
     )
+    setOpenSet(index + 1 < drafts.length ? index + 1 : index)
   }
 
   function removeRow(setId: string) {
@@ -186,17 +198,22 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
       exerciseId: next?.actualExerciseId ?? exerciseId,
       equipmentId: next?.equipmentId ?? equipmentId,
     })
-    setDrafts(draftsFrom(preload, next?.sets ?? [], item!.targetSets))
+    const rows = draftsFrom(preload, next?.sets ?? [], item!.targetSets)
+    setDrafts(rows)
+    setOpenSet(pendingSet(rows))
   }
 
   return (
     <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start">
       <div className="flex min-w-0 flex-col gap-4">
-        <Link to={`/sesion/${session.id}`} className="text-sm font-medium text-foreground">
-          Volver a la sesión
-        </Link>
+        <Button asChild variant="link" size="lg" className="w-fit px-0">
+          <Link to={`/sesion/${session.id}`}>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Volver a ejercicios
+          </Link>
+        </Button>
         <div className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">Entrenando en {gym?.name}</p>
+          <p className="text-sm text-muted-foreground">Sede: {gym?.name}</p>
           <h1 className="font-heading text-3xl font-medium">{exercise?.name}</h1>
           {exerciseId !== item.exerciseId ? <p>En la rutina: {planned?.name}</p> : null}
         </div>
@@ -247,12 +264,35 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
             const unit: Unit = saved?.unit ?? equipment?.unit ?? "kg"
             const series = index + 1
             const previousReady = index === 0 || Boolean(drafts[index - 1]?.setId)
+            const summary = draft.weight && draft.reps ? `${draft.weight} ${unit} × ${draft.reps}` : ""
             return (
-              <div key={draft.setId ?? `fila-${index}`} className="flex flex-col gap-3 rounded-xl border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium">Serie {series}</p>
-                  {draft.setId ? <Badge variant="secondary">Guardada</Badge> : null}
-                </div>
+              <Collapsible
+                key={draft.setId ?? `fila-${index}`}
+                open={openSet === index}
+                onOpenChange={(open) => setOpenSet(open ? index : -1)}
+                className="rounded-xl border"
+              >
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    className="h-auto min-h-12 w-full justify-between whitespace-normal"
+                  >
+                    <span className="flex flex-wrap items-center gap-2 text-left">
+                      <span className="font-medium">Serie {series}</span>
+                      {summary ? <span className="font-normal text-muted-foreground">{summary}</span> : null}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {draft.setId ? <Badge variant="secondary">Guardada</Badge> : null}
+                      <span className={cn("transition-transform duration-200 ease-out", openSet === index && "rotate-180")}>
+                        <ChevronDownIcon data-icon="inline-end" />
+                      </span>
+                    </span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                <div className="flex flex-col gap-3 px-3 pb-3">
                 <FieldGroup>
                   <Field data-invalid={errors[index] ? true : undefined}>
                     <FieldLabel htmlFor={`peso-${index}`}>Peso</FieldLabel>
@@ -395,7 +435,9 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
                     </AlertDialogContent>
                   </AlertDialog>
                 ) : null}
-              </div>
+                </div>
+                </CollapsibleContent>
+              </Collapsible>
             )
           })}
         </div>
@@ -403,12 +445,13 @@ export function ExerciseLogger({ sessionId, itemId }: { sessionId: string; itemI
           type="button"
           variant="outline"
           size="lg"
-          onClick={() =>
+          onClick={() => {
+            setOpenSet(drafts.length)
             setDrafts((current) => {
               const last = current.at(-1)
               return [...current, { weight: last?.weight ?? "", reps: last?.reps ?? "" }]
             })
-          }
+          }}
         >
           <PlusIcon data-icon="inline-start" />
           Agregar serie
